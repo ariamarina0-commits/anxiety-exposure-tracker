@@ -1,0 +1,23 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+
+# SQLite local database
+*.db
+*.db-shm
+*.db-wal
+
+# Node / React
+node_modules/
+dist/
+.env
+.env.local
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
