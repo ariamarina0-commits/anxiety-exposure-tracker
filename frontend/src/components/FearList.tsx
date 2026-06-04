@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getFears } from '../services/fearServices';
 import type { Fear } from '../types/Fear';
+import FearCard from './FearCard';
 
 function FearList() {
   const [fears, setFears] = useState<Fear[]>([]);
@@ -15,21 +16,22 @@ function FearList() {
   if (loading) return <p>Loading fears...</p>;
 
   return (
-    <div>
-      <h2>My Fears</h2>
+    <section>
+      <div className="section-header">
+        <h2>My Fears</h2>
+        <button>Add New Fear</button>
+      </div>
 
       {fears.length === 0 ? (
         <p>No fears added yet.</p>
       ) : (
-        <ul>
+        <div className="fear-grid">
           {fears.map((fear) => (
-            <li key={fear.id}>
-              <strong>{fear.title}</strong> — anxiety level: {fear.currentAnxietyLevel}/100
-            </li>
+            <FearCard key={fear.id} fear={fear} />
           ))}
-        </ul>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
 
