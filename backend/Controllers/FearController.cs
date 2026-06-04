@@ -7,48 +7,97 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-
 public class FearController : ControllerBase
 {
     private readonly AppDbContext _context;
+
     public FearController(AppDbContext context)
     {
-        _context=context;
+        _context = context;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<Fear>>> GetAll()
+    public async Task<ActionResult> GetAll()
     {
-        return await _context.Fears
-            .Include(f => f.ExposureSessions)
+        var fears = await _context.Fears
+            .Select(f => new
+            {
+                f.Id,
+                f.Title,
+                f.Description,
+                f.CurrentAnxietyLevel,
+                f.CreatedAt,
+                ExposureSessions = f.ExposureSessions.Select(s => new
+                {
+                    s.Id,
+                    s.FearId,
+                    s.Date,
+                    s.AnxietyBefore,
+                    s.AnxietyAfter,
+                    s.Notes
+                }).ToList()
+            })
             .ToListAsync();
+
+        return Ok(fears);
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<Fear>> GetById(int id)
+    public async Task<ActionResult> GetById(int id)
     {
         var fear = await _context.Fears
-            .Include(f => f.ExposureSessions)
-            .FirstOrDefaultAsync(f => f.Id == id);
+            .Where(f => f.Id == id)
+            .Select(f => new
+            {
+                f.Id,
+                f.Title,
+                f.Description,
+                f.CurrentAnxietyLevel,
+                f.CreatedAt,
+                ExposureSessions = f.ExposureSessions.Select(s => new
+                {
+                    s.Id,
+                    s.FearId,
+                    s.Date,
+                    s.AnxietyBefore,
+                    s.AnxietyAfter,
+                    s.Notes
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
 
         if (fear == null)
         {
             return NotFound();
         }
 
-        return fear;
+        return Ok(fear);
     }
-
 
     [HttpPost]
-    public async Task<ActionResult<Fear>> Create(Fear fear)
+    public async Task<ActionResult> Create(Fear fear)
     {
-        _context.Fears.Add(fear);
+        var newFear = new Fear
+        {
+            Title = fear.Title,
+            Description = fear.Description,
+            CurrentAnxietyLevel = fear.CurrentAnxietyLevel
+        };
+
+        _context.Fears.Add(newFear);
         await _context.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = fear.Id }, fear);
+
+        return CreatedAtAction(nameof(GetById), new { id = newFear.Id }, new
+        {
+            newFear.Id,
+            newFear.Title,
+            newFear.Description,
+            newFear.CurrentAnxietyLevel,
+            newFear.CreatedAt
+        });
     }
 
-     [HttpPut("{id}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Fear updatedFear)
     {
         var fear = await _context.Fears.FindAsync(id);
@@ -82,7 +131,4 @@ public class FearController : ControllerBase
 
         return NoContent();
     }
-
-
-
 }
