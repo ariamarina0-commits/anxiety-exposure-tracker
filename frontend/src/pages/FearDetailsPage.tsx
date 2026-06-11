@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getFearById } from '../services/fearServices';
+import {
+  getFearById,
+  deleteExposureSession,
+} from '../services/fearServices';
+
 import type { Fear, ExposureSession } from '../types/Fear';
+
 import AddExposureSessionForm from '../components/AddExposureSessionForm';
 import ProgressChart from '../components/ProgressChart';
 
@@ -18,6 +23,21 @@ function FearDetailsPage() {
       return {
         ...currentFear,
         exposureSessions: [session, ...currentFear.exposureSessions],
+      };
+    });
+  };
+
+  const handleDeleteSession = async (sessionId: number) => {
+    await deleteExposureSession(sessionId);
+
+    setFear((currentFear) => {
+      if (!currentFear) return currentFear;
+
+      return {
+        ...currentFear,
+        exposureSessions: currentFear.exposureSessions.filter(
+          (session) => session.id !== sessionId
+        ),
       };
     });
   };
@@ -61,7 +81,13 @@ function FearDetailsPage() {
         );
 
   const averageReduction = averageBefore - averageAfter;
-  const progressPercentage = averageBefore === 0 ? 0 : Math.round((averageReduction / averageBefore) * 100);
+
+  const progressPercentage =
+    averageBefore === 0
+      ? 0
+      : Math.round(
+          (averageReduction / averageBefore) * 100
+        );
 
   return (
     <div className="details-page">
@@ -72,10 +98,10 @@ function FearDetailsPage() {
       <p>{fear.description}</p>
 
       <div className="fear-meta">
-            <span className="badge">
-                Current Anxiety {fear.currentAnxietyLevel}/100
-            </span>
-        </div>
+        <span className="badge">
+          Current Anxiety {fear.currentAnxietyLevel}/100
+        </span>
+      </div>
 
       <div className="progress-summary">
         <div>
@@ -97,22 +123,24 @@ function FearDetailsPage() {
           <span>Average Reduction</span>
           <strong>{averageReduction}/100</strong>
         </div>
-        <div>
-            <span>Improvement</span>
-            <strong>{progressPercentage}%</strong>
-        </div>
 
+        <div>
+          <span>Improvement</span>
+          <strong>{progressPercentage}%</strong>
+        </div>
       </div>
 
-        <div className="progress-bar">
-            <div
-                className="progress-fill"
-                style={{
-                width: `${Math.max(progressPercentage, 0)}%`,
-                }}
-            />
-        </div>
-        <ProgressChart sessions={fear.exposureSessions} />
+      <div className="progress-bar">
+        <div
+          className="progress-fill"
+          style={{
+            width: `${Math.max(progressPercentage, 0)}%`,
+          }}
+        />
+      </div>
+
+      <ProgressChart sessions={fear.exposureSessions} />
+
       <AddExposureSessionForm
         fearId={fear.id}
         onSessionCreated={handleSessionCreated}
@@ -124,35 +152,55 @@ function FearDetailsPage() {
         <p>No sessions yet.</p>
       ) : (
         <div className="sessions-list">
-  {fear.exposureSessions.map((session) => {
-    const reduction = session.anxietyBefore - session.anxietyAfter;
+          {fear.exposureSessions.map((session) => {
+            const reduction =
+              session.anxietyBefore -
+              session.anxietyAfter;
 
-    return (
-      <div key={session.id} className="session-card">
-        <div className="session-card-header">
-            <strong>
-                {new Date(session.date).toLocaleDateString()}
-            </strong>
+            return (
+              <div
+                key={session.id}
+                className="session-card"
+              >
+                <div className="session-card-header">
+                  <strong>
+                    {new Date(
+                      session.date
+                    ).toLocaleDateString()}
+                  </strong>
 
-            <span className="reduction">
-                -{reduction} anxiety
-            </span>
+                  <span className="reduction">
+                    -{reduction} anxiety
+                  </span>
+                </div>
+
+                <p>
+                  <strong>Before:</strong>{' '}
+                  {session.anxietyBefore}/100
+                </p>
+
+                <p>
+                  <strong>After:</strong>{' '}
+                  {session.anxietyAfter}/100
+                </p>
+
+                {session.notes && (
+                  <p>{session.notes}</p>
+                )}
+
+                <button
+                  onClick={() =>
+                    handleDeleteSession(session.id)
+                  }
+                >
+                  Delete Session
+                </button>
+              </div>
+            );
+          })}
         </div>
-        <p>
-            <strong>Before:</strong> {session.anxietyBefore}/100
-        </p>
-        <p>
-            <strong>After:</strong> {session.anxietyAfter}/100
-        </p>
-        {session.notes && <p>{session.notes}</p>}
-        </div>
-        );
-    })}
-    </div>
       )}
     </div>
-    
-
   );
 }
 
