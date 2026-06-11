@@ -7,7 +7,23 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<FearList />} />
+        <Route
+          path="/"
+          element={
+            <main className="app">
+              <header className="hero">
+                <h1>Anxiety Exposure Tracker</h1>
+                <p>
+                  Track exposure sessions, monitor anxiety reduction, and see
+                  your progress over time.
+                </p>
+              </header>
+
+              <FearList />
+            </main>
+          }
+        />
+
         <Route path="/fear/:id" element={<FearDetailsPage />} />
       </Routes>
     </BrowserRouter>

@@ -1,5 +1,5 @@
-import type { Fear } from '../types/Fear';
 import { Link } from 'react-router-dom';
+import type { Fear } from '../types/Fear';
 
 type FearCardProps = {
   fear: Fear;
@@ -12,13 +12,12 @@ function FearCard({ fear }: FearCardProps) {
 
       {fear.description && <p>{fear.description}</p>}
 
-      <p>
-        <strong>Anxiety:</strong> {fear.currentAnxietyLevel}/100
-      </p>
-
-      <p>
-        <strong>Sessions:</strong> {fear.exposureSessions?.length ?? 0}
-      </p>
+      <div className="fear-meta">
+        <span className="badge">Anxiety {fear.currentAnxietyLevel}/100</span>
+        <span className="badge">
+          {fear.exposureSessions?.length ?? 0} sessions
+        </span>
+      </div>
 
       <Link to={`/fear/${fear.id}`}>
         <button>View Details</button>
