@@ -91,3 +91,17 @@ button {
   gap: 8px;
   font-weight: 600;
 }
+
+.details-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.session-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}

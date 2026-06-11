@@ -1,4 +1,5 @@
 import type { Fear } from '../types/Fear';
+import { Link } from 'react-router-dom';
 
 type FearCardProps = {
   fear: Fear;
@@ -19,7 +20,9 @@ function FearCard({ fear }: FearCardProps) {
         <strong>Sessions:</strong> {fear.exposureSessions?.length ?? 0}
       </p>
 
-      <button>View Details</button>
+      <Link to={`/fear/${fear.id}`}>
+        <button>View Details</button>
+      </Link>
     </div>
   );
 }
