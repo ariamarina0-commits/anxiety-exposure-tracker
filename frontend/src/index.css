@@ -60,3 +60,34 @@ button {
 .fear-card p {
   color: #4b5563;
 }
+
+.add-fear-form {
+  background: white;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.add-fear-form input,
+.add-fear-form textarea {
+  font: inherit;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+}
+
+.add-fear-form textarea {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.add-fear-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-weight: 600;
+}
