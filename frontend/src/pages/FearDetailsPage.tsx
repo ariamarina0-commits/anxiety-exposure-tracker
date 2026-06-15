@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   getFearById,
   deleteExposureSession,
+  deleteFear,
 } from '../services/fearServices';
 
 import type { Fear, ExposureSession } from '../types/Fear';
@@ -12,6 +13,7 @@ import ProgressChart from '../components/ProgressChart';
 
 function FearDetailsPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
 
   const [fear, setFear] = useState<Fear | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,20 @@ function FearDetailsPage() {
         ),
       };
     });
+  };
+
+  const handleDeleteFear = async () => {
+    if (!fear) return;
+
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this fear and all its sessions?'
+    );
+
+    if (!confirmed) return;
+
+    await deleteFear(fear.id);
+
+    navigate('/');
   };
 
   useEffect(() => {
@@ -102,6 +118,9 @@ function FearDetailsPage() {
           Current Anxiety {fear.currentAnxietyLevel}/100
         </span>
       </div>
+      <button onClick={handleDeleteFear}>
+        Delete Fear
+      </button>
 
       <div className="progress-summary">
         <div>

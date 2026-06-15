@@ -39,3 +39,7 @@ export const createExposureSession = async( session: CreateExposureSessionReques
 export const deleteExposureSession = async (sessionId: number): Promise<void> => {
   await axios.delete(`http://localhost:5228/api/ExposureSession/${sessionId}`);
 };
+
+export const deleteFear = async(fearId: number): Promise<void> =>{
+    await axios.delete(`${API_URL}/${fearId}`);
+};
