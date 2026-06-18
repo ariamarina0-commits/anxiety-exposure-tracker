@@ -1,7 +1,8 @@
 import axios from 'axios';
 import type { Fear } from '../types/Fear';
 
-const API_URL ='http://localhost:5228/api/Fear';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5228';
+const API_URL = `${API_BASE_URL}/api/Fear`;
 
 export type CreateFearRequest ={
     title: string;
@@ -32,12 +33,12 @@ export type CreateExposureSessionRequest ={
 };
 
 export const createExposureSession = async( session: CreateExposureSessionRequest) =>{
-    const response = await axios.post('http://localhost:5228/api/ExposureSession', session);
+    const response = await axios.post(`${API_BASE_URL}/api/ExposureSession`, session);
     return response.data;
 };
 
 export const deleteExposureSession = async (sessionId: number): Promise<void> => {
-  await axios.delete(`http://localhost:5228/api/ExposureSession/${sessionId}`);
+  await axios.delete(`${API_BASE_URL}/api/ExposureSession/${sessionId}`);
 };
 
 export const deleteFear = async(fearId: number): Promise<void> =>{
