@@ -2,6 +2,7 @@ using backend.Data;
 using backend.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using backend.DTOs;
 
 namespace backend.Controllers;
 
@@ -74,28 +75,35 @@ public class FearController : ControllerBase
         return Ok(fear);
     }
 
-    [HttpPost]
-    public async Task<ActionResult> Create(Fear fear)
+[HttpPost]
+public async Task<ActionResult> Create(CreateFearDto dto)
+{
+    if (string.IsNullOrWhiteSpace(dto.Title))
     {
-        var newFear = new Fear
-        {
-            Title = fear.Title,
-            Description = fear.Description,
-            CurrentAnxietyLevel = fear.CurrentAnxietyLevel
-        };
-
-        _context.Fears.Add(newFear);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetById), new { id = newFear.Id }, new
-        {
-            newFear.Id,
-            newFear.Title,
-            newFear.Description,
-            newFear.CurrentAnxietyLevel,
-            newFear.CreatedAt
-        });
+        return BadRequest("Title is required.");
     }
+
+    var newFear = new Fear
+    {
+        Title = dto.Title,
+        Description = dto.Description,
+        CurrentAnxietyLevel = dto.CurrentAnxietyLevel,
+        CreatedAt = DateTime.UtcNow
+    };
+
+    _context.Fears.Add(newFear);
+    await _context.SaveChangesAsync();
+
+    return CreatedAtAction(nameof(GetById), new { id = newFear.Id }, new
+    {
+        newFear.Id,
+        newFear.Title,
+        newFear.Description,
+        newFear.CurrentAnxietyLevel,
+        newFear.CreatedAt,
+        ExposureSessions = new List<object>()
+    });
+}
 
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(int id, Fear updatedFear)
