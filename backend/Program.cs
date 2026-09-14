@@ -1,6 +1,5 @@
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,14 +9,7 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    if (builder.Environment.IsProduction())
-    {
-        options.UseNpgsql(connectionString).ConfigureWarnings(warnings=>warnings.Ignore(RelationalEventId.PendingModelChangesWarning));
-    }
-    else
-    {
-        options.UseSqlite(connectionString);
-    }
+    options.UseNpgsql(connectionString);
 });
 
 builder.Services.AddCors(options =>
