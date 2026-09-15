@@ -85,8 +85,8 @@ public async Task<ActionResult> Create(CreateFearDto dto)
 
     var newFear = new Fear
     {
-        Title = dto.Title,
-        Description = dto.Description,
+        Title = dto.Title.Trim(),
+        Description = dto.Description?.Trim(),
         CurrentAnxietyLevel = dto.CurrentAnxietyLevel,
         CreatedAt = DateTime.UtcNow
     };
@@ -106,8 +106,13 @@ public async Task<ActionResult> Create(CreateFearDto dto)
 }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, Fear updatedFear)
+    public async Task<IActionResult> Update(int id, UpdateFearDto dto)
     {
+        if (string.IsNullOrWhiteSpace(dto.Title))
+        {
+            return BadRequest("Title is required.");
+        }
+
         var fear = await _context.Fears.FindAsync(id);
 
         if (fear == null)
@@ -115,9 +120,9 @@ public async Task<ActionResult> Create(CreateFearDto dto)
             return NotFound();
         }
 
-        fear.Title = updatedFear.Title;
-        fear.Description = updatedFear.Description;
-        fear.CurrentAnxietyLevel = updatedFear.CurrentAnxietyLevel;
+        fear.Title = dto.Title.Trim();
+        fear.Description = dto.Description?.Trim();
+        fear.CurrentAnxietyLevel = dto.CurrentAnxietyLevel;
 
         await _context.SaveChangesAsync();
 

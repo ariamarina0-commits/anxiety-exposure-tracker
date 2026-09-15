@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs;
 
-public class CreateFearDto
+public class UpdateFearDto
 {
     [Required(ErrorMessage = "Title is required.")]
     [StringLength(100, ErrorMessage = "Title cannot exceed 100 characters.")]
