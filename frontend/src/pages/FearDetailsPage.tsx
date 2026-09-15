@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+
 import {
   getFearById,
   deleteExposureSession,
@@ -17,6 +18,16 @@ function FearDetailsPage() {
 
   const [fear, setFear] = useState<Fear | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [deletingSessionId, setDeletingSessionId] =
+    useState<number | null>(null);
+
+  const [deleteSessionError, setDeleteSessionError] =
+    useState<string | null>(null);
+
+  const [isDeletingFear, setIsDeletingFear] = useState(false);
+  const [deleteFearError, setDeleteFearError] = useState<string | null>(null);
 
   const handleSessionCreated = (session: ExposureSession) => {
     setFear((currentFear) => {
@@ -24,24 +35,50 @@ function FearDetailsPage() {
 
       return {
         ...currentFear,
-        exposureSessions: [session, ...currentFear.exposureSessions],
+        exposureSessions: [
+          session,
+          ...currentFear.exposureSessions,
+        ],
       };
     });
   };
 
   const handleDeleteSession = async (sessionId: number) => {
-    await deleteExposureSession(sessionId);
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this exposure session?'
+    );
 
-    setFear((currentFear) => {
-      if (!currentFear) return currentFear;
+    if (!confirmed) return;
 
-      return {
-        ...currentFear,
-        exposureSessions: currentFear.exposureSessions.filter(
-          (session) => session.id !== sessionId
-        ),
-      };
-    });
+    try {
+      setDeletingSessionId(sessionId);
+      setDeleteSessionError(null);
+
+      await deleteExposureSession(sessionId);
+
+      setFear((currentFear) => {
+        if (!currentFear) return currentFear;
+
+        return {
+          ...currentFear,
+          exposureSessions:
+            currentFear.exposureSessions.filter(
+              (session) => session.id !== sessionId
+            ),
+        };
+      });
+    } catch (err) {
+      console.error(
+        'Failed to delete exposure session:',
+        err
+      );
+
+      setDeleteSessionError(
+        "We couldn't delete this exposure session. Please try again."
+      );
+    } finally {
+      setDeletingSessionId(null);
+    }
   };
 
   const handleDeleteFear = async () => {
@@ -53,21 +90,69 @@ function FearDetailsPage() {
 
     if (!confirmed) return;
 
-    await deleteFear(fear.id);
+    try {
+      setIsDeletingFear(true);
+      setDeleteFearError(null);
 
-    navigate('/');
+      await deleteFear(fear.id);
+
+      navigate('/');
+    } catch (err) {
+      console.error('Failed to delete fear:', err);
+
+      setDeleteFearError(
+        "We couldn't delete this fear. Please try again."
+      );
+    } finally {
+      setIsDeletingFear(false);
+    }
+  };
+
+  const loadFear = async () => {
+    if (!id) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getFearById(Number(id));
+
+      setFear(data);
+    } catch (err) {
+      console.error('Failed to load fear:', err);
+
+      setError(
+        "We couldn't load this fear. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (!id) return;
-
-    getFearById(Number(id))
-      .then((data) => setFear(data))
-      .finally(() => setLoading(false));
+    loadFear();
   }, [id]);
 
   if (loading) {
     return <p>Loading...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="error-state">
+        <h2>Something went wrong</h2>
+
+        <p>{error}</p>
+
+        <button onClick={loadFear}>
+          Try Again
+        </button>
+
+        <div>
+          <Link to="/">← Back to fears</Link>
+        </div>
+      </div>
+    );
   }
 
   if (!fear) {
@@ -81,7 +166,8 @@ function FearDetailsPage() {
       ? 0
       : Math.round(
           fear.exposureSessions.reduce(
-            (sum, session) => sum + session.anxietyBefore,
+            (sum, session) =>
+              sum + session.anxietyBefore,
             0
           ) / totalSessions
         );
@@ -91,17 +177,23 @@ function FearDetailsPage() {
       ? 0
       : Math.round(
           fear.exposureSessions.reduce(
-            (sum, session) => sum + session.anxietyAfter,
+            (sum, session) =>
+              sum + session.anxietyAfter,
             0
           ) / totalSessions
         );
 
-  const averageReduction = averageBefore - averageAfter;
+  const averageReduction =
+    averageBefore - averageAfter;
 
-  const overallImproved = averageReduction > 0;
-  const overallWorsened = averageReduction < 0;
+  const overallImproved =
+    averageReduction > 0;
 
-  const averageChange = Math.abs(averageReduction);
+  const overallWorsened =
+    averageReduction < 0;
+
+  const averageChange =
+    Math.abs(averageReduction);
 
   const progressPercentage =
     averageBefore === 0
@@ -120,13 +212,23 @@ function FearDetailsPage() {
 
       <div className="fear-meta">
         <span className="badge">
-          Current Anxiety {fear.currentAnxietyLevel}/100
+          Current Anxiety{' '}
+          {fear.currentAnxietyLevel}/100
         </span>
       </div>
 
-      <button onClick={handleDeleteFear}>
-        Delete Fear
+      <button
+        onClick={handleDeleteFear}
+        disabled={isDeletingFear}
+      >
+        {isDeletingFear ? 'Deleting...' : 'Delete Fear'}
       </button>
+
+      {deleteFearError && (
+      <div className="form-error" role="alert">
+        {deleteFearError}
+      </div>
+      )}
 
       <div className="progress-summary">
         <div>
@@ -136,12 +238,16 @@ function FearDetailsPage() {
 
         <div>
           <span>Average Before</span>
-          <strong>{averageBefore}/100</strong>
+          <strong>
+            {averageBefore}/100
+          </strong>
         </div>
 
         <div>
           <span>Average After</span>
-          <strong>{averageAfter}/100</strong>
+          <strong>
+            {averageAfter}/100
+          </strong>
         </div>
 
         <div>
@@ -188,26 +294,42 @@ function FearDetailsPage() {
           <div className="change-center" />
 
           {progressPercentage !== 0 && (
-          <div
-            className={
-              progressPercentage > 0
-                ? 'change-fill improvement'
-              : 'change-fill worsening'
-            }
-            style={{
-              width: `${Math.min(Math.abs(progressPercentage), 100) / 2}%`,
-            }}
-          />
-        )}
+            <div
+              className={
+                progressPercentage > 0
+                  ? 'change-fill improvement'
+                  : 'change-fill worsening'
+              }
+              style={{
+                width: `${
+                  Math.min(
+                    Math.abs(progressPercentage),
+                    100
+                  ) / 2
+                }%`,
+              }}
+            />
+          )}
         </div>
       </div>
 
-      <ProgressChart sessions={fear.exposureSessions} />
+      <ProgressChart
+        sessions={fear.exposureSessions}
+      />
 
       <AddExposureSessionForm
         fearId={fear.id}
         onSessionCreated={handleSessionCreated}
       />
+
+      {deleteSessionError && (
+        <div
+          className="form-error"
+          role="alert"
+        >
+          {deleteSessionError}
+        </div>
+      )}
 
       <h2>Exposure Sessions</h2>
 
@@ -215,66 +337,86 @@ function FearDetailsPage() {
         <p>No sessions yet.</p>
       ) : (
         <div className="sessions-list">
-          {fear.exposureSessions.map((session) => {
-            const anxietyChange =
-              session.anxietyAfter - session.anxietyBefore;
+          {fear.exposureSessions.map(
+            (session) => {
+              const anxietyChange =
+                session.anxietyAfter -
+                session.anxietyBefore;
 
-            const improved = anxietyChange < 0;
-            const worsened = anxietyChange > 0;
+              const improved =
+                anxietyChange < 0;
 
-            return (
-              <div
-                key={session.id}
-                className="session-card"
-              >
-                <div className="session-card-header">
-                  <strong>
-                    {new Date(
-                      session.date
-                    ).toLocaleDateString()}
-                  </strong>
+              const worsened =
+                anxietyChange > 0;
 
-                  <span
-                    className={
-                      improved
-                        ? 'anxiety-change improvement'
+              return (
+                <div
+                  key={session.id}
+                  className="session-card"
+                >
+                  <div className="session-card-header">
+                    <strong>
+                      {new Date(
+                        session.date
+                      ).toLocaleDateString()}
+                    </strong>
+
+                    <span
+                      className={
+                        improved
+                          ? 'anxiety-change improvement'
+                          : worsened
+                            ? 'anxiety-change increase'
+                            : 'anxiety-change neutral'
+                      }
+                    >
+                      {improved
+                        ? `↓ ${Math.abs(
+                            anxietyChange
+                          )} anxiety`
                         : worsened
-                          ? 'anxiety-change increase'
-                          : 'anxiety-change neutral'
+                          ? `↑ ${anxietyChange} anxiety`
+                          : 'No change'}
+                    </span>
+                  </div>
+
+                  <p>
+                    <strong>
+                      Before:
+                    </strong>{' '}
+                    {session.anxietyBefore}/100
+                  </p>
+
+                  <p>
+                    <strong>
+                      After:
+                    </strong>{' '}
+                    {session.anxietyAfter}/100
+                  </p>
+
+                  {session.notes && (
+                    <p>{session.notes}</p>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      handleDeleteSession(
+                        session.id
+                      )
+                    }
+                    disabled={
+                      deletingSessionId !== null
                     }
                   >
-                    {improved
-                      ? `↓ ${Math.abs(anxietyChange)} anxiety`
-                      : worsened
-                        ? `↑ ${anxietyChange} anxiety`
-                        : 'No change'}
-                  </span>
+                    {deletingSessionId ===
+                    session.id
+                      ? 'Deleting...'
+                      : 'Delete Session'}
+                  </button>
                 </div>
-
-                <p>
-                  <strong>Before:</strong>{' '}
-                  {session.anxietyBefore}/100
-                </p>
-
-                <p>
-                  <strong>After:</strong>{' '}
-                  {session.anxietyAfter}/100
-                </p>
-
-                {session.notes && (
-                  <p>{session.notes}</p>
-                )}
-
-                <button
-                  onClick={() =>
-                    handleDeleteSession(session.id)
-                  }
-                >
-                  Delete Session
-                </button>
-              </div>
-            );
-          })}
+              );
+            }
+          )}
         </div>
       )}
     </div>
