@@ -38,18 +38,27 @@ public class ExposureSessionController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<ExposureSession>> GetById(int id)
+    public async Task<ActionResult> GetById(int id)
     {
         var session = await _context.ExposureSessions
-            .Include(s => s.Fear)
-            .FirstOrDefaultAsync(s => s.Id == id);
+            .Where(s => s.Id == id)
+            .Select(s => new
+            {
+                s.Id,
+                s.FearId,
+                s.Date,
+                s.AnxietyBefore,
+                s.AnxietyAfter,
+                s.Notes
+            })
+            .FirstOrDefaultAsync();
 
         if (session == null)
         {
             return NotFound();
         }
 
-        return session;
+        return Ok(session);
     }
 
     [HttpGet("fear/{fearId}")]
@@ -94,7 +103,7 @@ public class ExposureSessionController : ControllerBase
             FearId = dto.FearId,
             AnxietyBefore = dto.AnxietyBefore,
             AnxietyAfter = dto.AnxietyAfter,
-            Notes = dto.Notes,
+            Notes = dto.Notes?.Trim(),
             Date = DateTime.UtcNow
         };
 
@@ -113,7 +122,7 @@ public class ExposureSessionController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, ExposureSession updatedSession)
+    public async Task<IActionResult> Update(int id, UpdateExposureSessionDto dto)
     {
         var session = await _context.ExposureSessions.FindAsync(id);
 
@@ -122,18 +131,17 @@ public class ExposureSessionController : ControllerBase
             return NotFound();
         }
 
-        var fearExists = await _context.Fears.AnyAsync(f => f.Id == updatedSession.FearId);
+        var fearExists = await _context.Fears.AnyAsync(f => f.Id == dto.FearId);
 
         if (!fearExists)
         {
             return BadRequest("Invalid FearId.");
         }
 
-        session.FearId = updatedSession.FearId;
-        session.Date = updatedSession.Date;
-        session.AnxietyBefore = updatedSession.AnxietyBefore;
-        session.AnxietyAfter = updatedSession.AnxietyAfter;
-        session.Notes = updatedSession.Notes;
+        session.FearId = dto.FearId;
+        session.AnxietyBefore = dto.AnxietyBefore;
+        session.AnxietyAfter = dto.AnxietyAfter;
+        session.Notes = dto.Notes?.Trim();
 
         await _context.SaveChangesAsync();
 

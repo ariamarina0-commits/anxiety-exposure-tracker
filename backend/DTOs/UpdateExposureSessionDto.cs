@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace backend.DTOs;
 
-public class CreateExposureSessionDto
+public class UpdateExposureSessionDto
 {
     [Range(1, int.MaxValue, ErrorMessage = "FearId must be greater than 0.")]
     public int FearId { get; set; }

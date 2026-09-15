@@ -12,23 +12,46 @@ function AddExposureSessionForm({ fearId, onSessionCreated }: Props) {
   const [anxietyAfter, setAnxietyAfter] = useState(30);
   const [notes, setNotes] = useState('');
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (
     event: React.SyntheticEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
 
-    const newSession = await createExposureSession({
-      fearId,
-      anxietyBefore,
-      anxietyAfter,
-      notes,
-    });
+    if (anxietyBefore < 0 || anxietyBefore > 100) {
+      setError('Anxiety before must be between 0 and 100.');
+      return;
+    }
 
-    onSessionCreated(newSession);
+    if (anxietyAfter < 0 || anxietyAfter > 100) {
+      setError('Anxiety after must be between 0 and 100.');
+      return;
+    }
 
-    setAnxietyBefore(50);
-    setAnxietyAfter(30);
-    setNotes('');
+    try {
+      setIsSaving(true);
+      setError(null);
+
+      const newSession = await createExposureSession({
+        fearId,
+        anxietyBefore,
+        anxietyAfter,
+        notes: notes.trim(),
+      });
+
+      onSessionCreated(newSession);
+
+      setAnxietyBefore(50);
+      setAnxietyAfter(30);
+      setNotes('');
+    } catch (err) {
+      console.error('Failed to create exposure session:', err);
+      setError("We couldn't save your exposure session. Please try again.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -42,7 +65,10 @@ function AddExposureSessionForm({ fearId, onSessionCreated }: Props) {
           min="0"
           max="100"
           value={anxietyBefore}
-          onChange={(e) => setAnxietyBefore(Number(e.target.value))}
+          onChange={(event) =>
+            setAnxietyBefore(Number(event.target.value))
+          }
+          disabled={isSaving}
         />
       </label>
 
@@ -53,17 +79,30 @@ function AddExposureSessionForm({ fearId, onSessionCreated }: Props) {
           min="0"
           max="100"
           value={anxietyAfter}
-          onChange={(e) => setAnxietyAfter(Number(e.target.value))}
+          onChange={(event) =>
+            setAnxietyAfter(Number(event.target.value))
+          }
+          disabled={isSaving}
         />
       </label>
 
       <textarea
         placeholder="Notes"
         value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        onChange={(event) => setNotes(event.target.value)}
+        disabled={isSaving}
+        maxLength={1000}
       />
 
-      <button type="submit">Save Session</button>
+      {error && (
+        <div className="form-error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <button type="submit" disabled={isSaving}>
+        {isSaving ? 'Saving...' : 'Save Session'}
+      </button>
     </form>
   );
 }
