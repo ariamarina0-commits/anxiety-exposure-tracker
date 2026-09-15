@@ -8,11 +8,25 @@ function FearList() {
   const [fears, setFears] = useState<Fear[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadFears = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getFears();
+      setFears(data);
+    } catch (err) {
+      console.error('Failed to load fears:', err);
+      setError("We couldn't load your fears. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getFears()
-      .then((data) => setFears(data))
-      .finally(() => setLoading(false));
+    loadFears();
   }, []);
 
   const handleFearCreated = (fear: Fear) => {
@@ -20,20 +34,33 @@ function FearList() {
     setShowForm(false);
   };
 
-  if (loading) return <p>Loading fears...</p>;
+  if (loading) {
+    return <p>Loading fears...</p>;
+  }
 
   return (
     <section>
       <div className="section-header">
         <h2>My Fears</h2>
-        <button onClick={() => setShowForm((current) => !current)}>
-          {showForm ? 'Cancel' : 'Add New Fear'}
-        </button>
+
+        {!error && (
+          <button onClick={() => setShowForm((current) => !current)}>
+            {showForm ? 'Cancel' : 'Add New Fear'}
+          </button>
+        )}
       </div>
 
-      {showForm && <AddFearForm onFearCreated={handleFearCreated} />}
+      {showForm && (
+        <AddFearForm onFearCreated={handleFearCreated} />
+      )}
 
-      {fears.length === 0 ? (
+      {error ? (
+        <div className="error-state">
+          <h3>Something went wrong</h3>
+          <p>{error}</p>
+          <button onClick={loadFears}>Try Again</button>
+        </div>
+      ) : fears.length === 0 ? (
         <p>No fears added yet.</p>
       ) : (
         <div className="fear-grid">
