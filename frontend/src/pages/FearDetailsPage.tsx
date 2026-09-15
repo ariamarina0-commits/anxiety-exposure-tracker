@@ -98,6 +98,11 @@ function FearDetailsPage() {
 
   const averageReduction = averageBefore - averageAfter;
 
+  const overallImproved = averageReduction > 0;
+  const overallWorsened = averageReduction < 0;
+
+  const averageChange = Math.abs(averageReduction);
+
   const progressPercentage =
     averageBefore === 0
       ? 0
@@ -118,6 +123,7 @@ function FearDetailsPage() {
           Current Anxiety {fear.currentAnxietyLevel}/100
         </span>
       </div>
+
       <button onClick={handleDeleteFear}>
         Delete Fear
       </button>
@@ -139,23 +145,61 @@ function FearDetailsPage() {
         </div>
 
         <div>
-          <span>Average Reduction</span>
-          <strong>{averageReduction}/100</strong>
+          <span>
+            {overallImproved
+              ? 'Average Reduction'
+              : overallWorsened
+                ? 'Average Increase'
+                : 'Average Change'}
+          </span>
+
+          <strong>
+            {overallImproved
+              ? `↓ ${averageChange}/100`
+              : overallWorsened
+                ? `↑ ${averageChange}/100`
+                : '0/100'}
+          </strong>
         </div>
 
         <div>
-          <span>Improvement</span>
-          <strong>{progressPercentage}%</strong>
+          <span>
+            {overallImproved
+              ? 'Improvement'
+              : overallWorsened
+                ? 'Increase'
+                : 'Change'}
+          </span>
+
+          <strong>
+            {Math.abs(progressPercentage)}%
+          </strong>
         </div>
       </div>
 
-      <div className="progress-bar">
-        <div
-          className="progress-fill"
-          style={{
-            width: `${Math.max(progressPercentage, 0)}%`,
-          }}
-        />
+      <div className="change-indicator">
+        <div className="change-labels">
+          <span>Worsening</span>
+          <span>No change</span>
+          <span>Improvement</span>
+        </div>
+
+        <div className="change-track">
+          <div className="change-center" />
+
+          {progressPercentage !== 0 && (
+          <div
+            className={
+              progressPercentage > 0
+                ? 'change-fill improvement'
+              : 'change-fill worsening'
+            }
+            style={{
+              width: `${Math.min(Math.abs(progressPercentage), 100) / 2}%`,
+            }}
+          />
+        )}
+        </div>
       </div>
 
       <ProgressChart sessions={fear.exposureSessions} />
@@ -172,9 +216,11 @@ function FearDetailsPage() {
       ) : (
         <div className="sessions-list">
           {fear.exposureSessions.map((session) => {
-            const reduction =
-              session.anxietyBefore -
-              session.anxietyAfter;
+            const anxietyChange =
+              session.anxietyAfter - session.anxietyBefore;
+
+            const improved = anxietyChange < 0;
+            const worsened = anxietyChange > 0;
 
             return (
               <div
@@ -188,8 +234,20 @@ function FearDetailsPage() {
                     ).toLocaleDateString()}
                   </strong>
 
-                  <span className="reduction">
-                    -{reduction} anxiety
+                  <span
+                    className={
+                      improved
+                        ? 'anxiety-change improvement'
+                        : worsened
+                          ? 'anxiety-change increase'
+                          : 'anxiety-change neutral'
+                    }
+                  >
+                    {improved
+                      ? `↓ ${Math.abs(anxietyChange)} anxiety`
+                      : worsened
+                        ? `↑ ${anxietyChange} anxiety`
+                        : 'No change'}
                   </span>
                 </div>
 

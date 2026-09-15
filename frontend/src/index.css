@@ -215,9 +215,20 @@ a {
   margin-bottom: 10px;
 }
 
-.reduction {
+.anxiety-change {
   font-weight: 800;
+}
+
+.anxiety-change.improvement {
   color: #059669;
+}
+
+.anxiety-change.increase {
+  color: #dc2626;
+}
+
+.anxiety-change.neutral {
+  color: #6b7280;
 }
 
 @media (max-width: 640px) {
@@ -232,21 +243,56 @@ a {
   }
 }
 
-.progress-bar {
+.change-indicator {
+  margin: 18px 0 28px;
+}
+
+.change-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.change-track {
+  position: relative;
   width: 100%;
   height: 14px;
   background: #e5e7eb;
   border-radius: 999px;
   overflow: hidden;
-  margin: 18px 0 28px;
 }
 
-.progress-fill {
+.change-center {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 2px;
   height: 100%;
+  background: #6b7280;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+
+.change-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.change-fill.improvement {
+  left: 50%;
   background: linear-gradient(
     90deg,
     #8b5cf6,
     #10b981
   );
-  transition: width 0.3s ease;
+}
+
+.change-fill.worsening {
+  right: 50%;
+  background: #dc2626;
 }
