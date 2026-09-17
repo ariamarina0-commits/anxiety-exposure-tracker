@@ -14,5 +14,8 @@ public class Fear
     public int CurrentAnxietyLevel { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public string UserId { get; set; } = string.Empty;
+    public ApplicationUser User { get; set; } = null!;
+
     public List<ExposureSession> ExposureSessions { get; set; } = new();
 }
