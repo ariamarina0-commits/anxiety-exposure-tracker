@@ -1,32 +1,27 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import FearList from './components/FearList';
+import HomePage from './pages/HomePage';
+import RegisterPage from './pages/RegisterPage';
 import FearDetailsPage from './pages/FearDetailsPage';
 import './index.css';
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<HomePage />} />
         <Route
-          path="/"
-          element={
-            <main className="app">
-              <header className="hero">
-                <h1>Anxiety Exposure Tracker</h1>
-                <p>
-                  Track exposure sessions, monitor anxiety reduction, and see
-                  your progress over time.
-                </p>
-              </header>
-
-              <FearList />
-            </main>
-          }
+          path="/fear/:id"
+          element={<FearDetailsPage />}
         />
-
-        <Route path="/fear/:id" element={<FearDetailsPage />} />
-      </Routes>
-    </BrowserRouter>
+      </Route>
+    </Routes>
+  </BrowserRouter>
   );
 }
 
