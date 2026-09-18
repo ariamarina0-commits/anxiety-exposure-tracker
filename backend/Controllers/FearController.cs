@@ -1,13 +1,16 @@
+using System.Security.Claims;
 using backend.Data;
+using backend.DTOs;
 using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using backend.DTOs;
 
 namespace backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class FearController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,7 +23,10 @@ public class FearController : ControllerBase
     [HttpGet]
     public async Task<ActionResult> GetAll()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var fears = await _context.Fears
+            .Where(f => f.UserId == userId)
             .Select(f => new
             {
                 f.Id,
@@ -46,8 +52,10 @@ public class FearController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetById(int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var fear = await _context.Fears
-            .Where(f => f.Id == id)
+            .Where(f => f.Id == id && f.UserId == userId)
             .Select(f => new
             {
                 f.Id,
@@ -75,45 +83,59 @@ public class FearController : ControllerBase
         return Ok(fear);
     }
 
-[HttpPost]
-public async Task<ActionResult> Create(CreateFearDto dto)
-{
-    if (string.IsNullOrWhiteSpace(dto.Title))
+    [HttpPost]
+    public async Task<ActionResult> Create(CreateFearDto dto)
     {
-        return BadRequest("Title is required.");
-    }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    var newFear = new Fear
-    {
-        Title = dto.Title.Trim(),
-        Description = dto.Description?.Trim(),
-        CurrentAnxietyLevel = dto.CurrentAnxietyLevel,
-        CreatedAt = DateTime.UtcNow
-    };
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
 
-    _context.Fears.Add(newFear);
-    await _context.SaveChangesAsync();
-
-    return CreatedAtAction(nameof(GetById), new { id = newFear.Id }, new
-    {
-        newFear.Id,
-        newFear.Title,
-        newFear.Description,
-        newFear.CurrentAnxietyLevel,
-        newFear.CreatedAt,
-        ExposureSessions = new List<object>()
-    });
-}
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateFearDto dto)
-    {
         if (string.IsNullOrWhiteSpace(dto.Title))
         {
             return BadRequest("Title is required.");
         }
 
-        var fear = await _context.Fears.FindAsync(id);
+        var newFear = new Fear
+        {
+            Title = dto.Title.Trim(),
+            Description = dto.Description?.Trim(),
+            CurrentAnxietyLevel = dto.CurrentAnxietyLevel,
+            CreatedAt = DateTime.UtcNow,
+            UserId = userId
+        };
+
+        _context.Fears.Add(newFear);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetById), new { id = newFear.Id }, new
+        {
+            newFear.Id,
+            newFear.Title,
+            newFear.Description,
+            newFear.CurrentAnxietyLevel,
+            newFear.CreatedAt,
+            ExposureSessions = new List<object>()
+        });
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Update(int id, UpdateFearDto dto)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(dto.Title))
+        {
+            return BadRequest("Title is required.");
+        }
+
+        var fear = await _context.Fears
+            .FirstOrDefaultAsync(f =>
+                f.Id == id &&
+                f.UserId == userId
+            );
 
         if (fear == null)
         {
@@ -132,7 +154,13 @@ public async Task<ActionResult> Create(CreateFearDto dto)
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var fear = await _context.Fears.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var fear = await _context.Fears
+            .FirstOrDefaultAsync(f =>
+                f.Id == id &&
+                f.UserId == userId
+            );
 
         if (fear == null)
         {

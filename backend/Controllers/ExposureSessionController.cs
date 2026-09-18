@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using backend.Data;
-using backend.Models;
 using backend.DTOs;
+using backend.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +10,7 @@ namespace backend.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ExposureSessionController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -20,7 +23,10 @@ public class ExposureSessionController : ControllerBase
     [HttpGet]
     public async Task<ActionResult> GetAll()
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var sessions = await _context.ExposureSessions
+            .Where(s => s.Fear.UserId == userId)
             .OrderByDescending(s => s.Date)
             .Select(s => new
             {
@@ -40,8 +46,13 @@ public class ExposureSessionController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult> GetById(int id)
     {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var session = await _context.ExposureSessions
-            .Where(s => s.Id == id)
+            .Where(s =>
+                s.Id == id &&
+                s.Fear.UserId == userId
+            )
             .Select(s => new
             {
                 s.Id,
@@ -64,15 +75,24 @@ public class ExposureSessionController : ControllerBase
     [HttpGet("fear/{fearId}")]
     public async Task<ActionResult> GetByFearId(int fearId)
     {
-        var fearExists = await _context.Fears.AnyAsync(f => f.Id == fearId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var fearExists = await _context.Fears
+            .AnyAsync(f =>
+                f.Id == fearId &&
+                f.UserId == userId
+            );
 
         if (!fearExists)
         {
-            return NotFound("Fear not found.");
+            return NotFound();
         }
 
         var sessions = await _context.ExposureSessions
-            .Where(s => s.FearId == fearId)
+            .Where(s =>
+                s.FearId == fearId &&
+                s.Fear.UserId == userId
+            )
             .OrderByDescending(s => s.Date)
             .Select(s => new
             {
@@ -89,13 +109,20 @@ public class ExposureSessionController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<ExposureSession>> Create(CreateExposureSessionDto dto)
+    public async Task<ActionResult<ExposureSession>> Create(
+        CreateExposureSessionDto dto)
     {
-        var fearExists = await _context.Fears.AnyAsync(f => f.Id == dto.FearId);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var fearExists = await _context.Fears
+            .AnyAsync(f =>
+                f.Id == dto.FearId &&
+                f.UserId == userId
+            );
 
         if (!fearExists)
         {
-            return BadRequest("Invalid FearId.");
+            return NotFound();
         }
 
         var session = new ExposureSession
@@ -110,32 +137,48 @@ public class ExposureSessionController : ControllerBase
         _context.ExposureSessions.Add(session);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetById), new { id = session.Id }, new
-        {
-            session.Id,
-            session.FearId,
-            session.Date,
-            session.AnxietyBefore,
-            session.AnxietyAfter,
-            session.Notes
-        });
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = session.Id },
+            new
+            {
+                session.Id,
+                session.FearId,
+                session.Date,
+                session.AnxietyBefore,
+                session.AnxietyAfter,
+                session.Notes
+            }
+        );
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(int id, UpdateExposureSessionDto dto)
+    public async Task<IActionResult> Update(
+        int id,
+        UpdateExposureSessionDto dto)
     {
-        var session = await _context.ExposureSessions.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var session = await _context.ExposureSessions
+            .FirstOrDefaultAsync(s =>
+                s.Id == id &&
+                s.Fear.UserId == userId
+            );
 
         if (session == null)
         {
             return NotFound();
         }
 
-        var fearExists = await _context.Fears.AnyAsync(f => f.Id == dto.FearId);
+        var destinationFearExists = await _context.Fears
+            .AnyAsync(f =>
+                f.Id == dto.FearId &&
+                f.UserId == userId
+            );
 
-        if (!fearExists)
+        if (!destinationFearExists)
         {
-            return BadRequest("Invalid FearId.");
+            return NotFound();
         }
 
         session.FearId = dto.FearId;
@@ -151,7 +194,13 @@ public class ExposureSessionController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var session = await _context.ExposureSessions.FindAsync(id);
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        var session = await _context.ExposureSessions
+            .FirstOrDefaultAsync(s =>
+                s.Id == id &&
+                s.Fear.UserId == userId
+            );
 
         if (session == null)
         {
