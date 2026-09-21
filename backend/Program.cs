@@ -68,9 +68,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.AllowAnyOrigin()
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy
+                .WithOrigins(
+                    "http://localhost:5173",
+                    "https://anxiety-exposure-tracker.vercel.app"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         });
 });
 
