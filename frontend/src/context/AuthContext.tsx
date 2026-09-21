@@ -23,17 +23,30 @@ type AuthContextType = {
   logout: () => void;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
 type AuthProviderProps = {
   children: ReactNode;
 };
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export function AuthProvider({
+  children,
+}: AuthProviderProps) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const handleUnauthorized = () => {
+      setUser(null);
+    };
+
+    window.addEventListener(
+      'auth:unauthorized',
+      handleUnauthorized
+    );
+
     const restoreSession = async () => {
       const token = getToken();
 
@@ -54,6 +67,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
 
     restoreSession();
+
+    return () => {
+      window.removeEventListener(
+        'auth:unauthorized',
+        handleUnauthorized
+      );
+    };
   }, []);
 
   const login = async (
