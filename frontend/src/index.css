@@ -397,3 +397,64 @@ a {
 .logout-button:hover {
   background: #ddd6fe;
 }
+
+.fear-header-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.breathing-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 12px 20px;
+    border: 2px solid #7c3aed;
+    border-radius: 12px;
+
+    background: #f5f0ff;
+    color: #6d28d9;
+
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.breathing-link:hover {
+    background: #e9ddff;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+    .fear-header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .breathing-link {
+        text-align: center;
+    }
+}
+
+.fear-header-actions .breathing-link,
+.fear-header-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 44px;
+    padding: 10px 20px;
+    border-radius: 999px;
+
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    box-sizing: border-box;
+}

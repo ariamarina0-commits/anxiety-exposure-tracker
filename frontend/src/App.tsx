@@ -5,6 +5,7 @@ import FearDetailsPage from './pages/FearDetailsPage';
 import './index.css';
 import LoginPage from './pages/LoginPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import BreathingPage from './pages/BreathingPage';
 
 function App() {
   return (
@@ -18,6 +19,10 @@ function App() {
         <Route
           path="/fear/:id"
           element={<FearDetailsPage />}
+        />
+        <Route
+          path="/breathing"
+          element={<BreathingPage />}
         />
       </Route>
     </Routes>

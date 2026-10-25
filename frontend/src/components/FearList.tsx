@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import {Link} from 'react-router-dom';
 import { getFears } from '../services/fearServices';
 import type { Fear } from '../types/Fear';
 import FearCard from './FearCard';
@@ -43,11 +44,17 @@ function FearList() {
       <div className="section-header">
         <h2>My Fears</h2>
 
-        {!error && (
-          <button onClick={() => setShowForm((current) => !current)}>
-            {showForm ? 'Cancel' : 'Add New Fear'}
-          </button>
-        )}
+        <div className="fear-header-actions">
+          <Link to="/breathing" className="breathing-link">
+            Take a Breathing Break
+          </Link>
+
+          {!error && (
+            <button onClick={() => setShowForm((current) => !current)}>
+              {showForm ? 'Cancel' : 'Add New Fear'}
+            </button>
+          )}
+        </div>
       </div>
 
       {showForm && (
